@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Army Rush</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1020; font-family: system-ui, sans-serif; color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
+    #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    #hud { position: fixed; inset: 0; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    #count { position: absolute; top: calc(env(safe-area-inset-top) + 12px); left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800; text-shadow: 0 2px 6px #000a; }
+    #progress { position: absolute; top: calc(env(safe-area-inset-top) + 58px); left: 20%; right: 20%; height: 8px; background: #fff3; border-radius: 4px; overflow: hidden; }
+    #progress > div { height: 100%; width: 0%; background: #4cc9f0; }
+    #level { position: absolute; top: calc(env(safe-area-inset-top) + 14px); left: 14px; font-size: 16px; font-weight: 700; opacity: .85; }
+    #pauseBtn { position: absolute; top: calc(env(safe-area-inset-top) + 10px); right: 12px; width: 48px; height: 48px; border-radius: 12px; border: 0; background: #0008; color: #fff; font-size: 22px; pointer-events: auto; }
+    #bossbar { position: absolute; top: calc(env(safe-area-inset-top) + 76px); left: 15%; right: 15%; height: 12px; background: #0008; border-radius: 6px; overflow: hidden; display: none; }
+    #bossbar > div { height: 100%; width: 100%; background: #e63946; }
+    #toast { position: absolute; top: 38%; left: 0; right: 0; text-align: center; font-size: 28px; font-weight: 800; text-shadow: 0 2px 8px #000; opacity: 0; transition: opacity .2s; }
+    .screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: linear-gradient(180deg, #0b1020f2, #1a2442f2); padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom); text-align: center; }
+    .screen.show { display: flex; }
+    .screen h1 { margin: 0 0 6px; font-size: 40px; }
+    .screen p { margin: 0; opacity: .85; font-size: 18px; }
+    .btn { min-width: 220px; min-height: 52px; padding: 12px 22px; border: 0; border-radius: 14px; background: #4cc9f0; color: #06121f; font-size: 19px; font-weight: 800; }
+    .btn.sec { background: #ffffff22; color: #fff; }
+    .btn:disabled { opacity: .4; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .demo { font-size: 12px; opacity: .6; }
+    .screen.scroll { justify-content: flex-start; overflow-y: auto; touch-action: pan-y; padding-top: calc(env(safe-area-inset-top) + 12px); padding-bottom: calc(env(safe-area-inset-bottom) + 20px); }
+    .screen > * { flex-shrink: 0; }
+    .screen h2 { margin: 6px 0 0; font-size: 24px; width: min(420px, 92vw); text-align: left; }
+    .bar { display: flex; gap: 18px; font-weight: 800; font-size: 18px; }
+    .btn.big { min-width: 260px; min-height: 64px; font-size: 22px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(420px, 92vw); }
+    .grid .btn { min-width: 0; }
+    .card { display: flex; align-items: center; gap: 10px; width: min(420px, 92vw); box-sizing: border-box; background: #ffffff14; border-radius: 14px; padding: 10px 12px; text-align: left; }
+    .card.col { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .card .grow { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .card .btn { min-width: 92px; min-height: 48px; padding: 8px 12px; font-size: 16px; }
+    .card small, .day small { opacity: .75; font-size: 13px; }
+    .sw { width: 28px; height: 28px; border-radius: 8px; flex: none; }
+    .lvls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: min(420px, 92vw); }
+    .lvl { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; border: 0; border-radius: 12px; background: #4cc9f0; color: #06121f; padding: 4px 2px; }
+    .lvl small { font-size: 9px; line-height: 1.1; }
+    .lvl.done { background: #80ed99; }
+    .lvl.locked { background: #ffffff22; color: #fff; opacity: .5; }
+    .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: min(420px, 92vw); }
+    .day { background: #ffffff14; border-radius: 10px; padding: 6px 2px; display: flex; flex-direction: column; font-size: 11px; }
+    .day small { font-size: 9px; }
+    .day.cur { outline: 2px solid #ffd166; }
+    .day.past { opacity: .45; }
+    .note { background: #ffd16633; border-radius: 10px; padding: 8px 12px; width: min(420px, 92vw); box-sizing: border-box; font-size: 15px; }
+    .warn { background: #e6394633; border: 1px solid #e63946; border-radius: 10px; padding: 8px 12px; width: min(420px, 92vw); box-sizing: border-box; font-size: 13px; }
+    input[type=range] { width: 130px; }
+    .up { display: flex; justify-content: space-between; gap: 10px; width: min(360px, 90vw); }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="level"></div>
+    <div id="count">10</div>
+    <div id="progress"><div></div></div>
+    <div id="bossbar"><div></div></div>
+    <button id="pauseBtn" aria-label="Duraklat">❚❚</button>
+    <div id="toast"></div>
+  </div>
+  <div class="screen" id="menu"></div>
+  <div class="screen" id="pause"></div>
+  <div class="screen" id="end"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

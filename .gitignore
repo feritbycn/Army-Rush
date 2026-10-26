@@ -1,0 +1,22 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# Android derleme çıktıları ve yerel ayarlar
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/build/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+# İmzalama anahtarları ASLA depoya girmemeli
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+*service-account*.json
+.env
+.env.*
