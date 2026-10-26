@@ -63,7 +63,12 @@ jobs:
       # Test/kurulum paketi: debug anahtarıyla imzalanır, Google Play'e YÜKLENEMEZ.
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --stacktrace 2>&1 | tee "$RUNNER_TEMP/gradle-debug.log" || {
+            grep -E "FAILED|error:|Error|What went wrong|Caused by|> " "$RUNNER_TEMP/gradle-debug.log" | head -15 | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          }
 
       # İmzalama bilgileri GitHub Secrets'ta ise release imzalanır; yoksa İMZASIZ AAB üretilir.
       - name: Decode keystore (yalnızca secret tanımlıysa)
